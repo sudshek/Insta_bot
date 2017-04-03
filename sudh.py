@@ -89,7 +89,7 @@ def get_media_id(User_name):
 
     info = response.json()["data"]
 
-    return info[0]["id"]
+    return info[1]["id"]
 
 
 
@@ -208,6 +208,8 @@ def delete_comment(username):
     media_id = get_media_id(username)
 
     comment_id = get_comment_id(username)
+    print media_id
+    print comment_id
 
     if len(comment_id)>0:
 
@@ -215,9 +217,9 @@ def delete_comment(username):
 
         for itr in comment_id:
 
-            URL = BASE_URL + "/media/%s/comment/%s?access_token=%s" %(media_id,itr,APP_ACCESS_TOKEN)
+            URL = BASE_URL + "/media/%s/comments/%s?access_token=%s" %(media_id,itr,APP_ACCESS_TOKEN)
             print URL
-            response = requests.delete(URL).json()
+            response = requests.delete(URL)
             print itr
             print response
 
@@ -229,7 +231,7 @@ delete_comment('piyush')
 
 
 
-
+delete_comment('piyush')
 
 
 
