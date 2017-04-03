@@ -9,6 +9,7 @@ APP_ACCESS_TOKEN = "398715021.1c98adf.13e3472fd0914d20bcccb1bd9f89a038"
 response = ""
 
 
+
 # To print my own info
 def my_info():
 
@@ -16,9 +17,9 @@ def my_info():
 
     response = requests.get(URL)
 
-    print  response
 
-    return response
+
+    return response.json()
 
 
 #to print users id
@@ -31,7 +32,7 @@ def get_user_id(user_name):
 
     user_id = response.json()['data'][0]['id']
 
-    print "User Id: %s" %(user_id)
+
 
     return user_id
 
@@ -168,14 +169,15 @@ def get_comment_id(username):
 
     print response.json()
 
+# Storing all the commenrt_id of comments containing word entered by user in a list "comment_id)
     for i in range(len(info)):
-        print "%s commented %s" %(info[i]["from"]["username"], info[i]['text'])
+
         split = info[i]['text'].split()
 
         if word in split:
             comment_id.append(info[i]['id'])
 
-    print comment_id
+
     return comment_id
 
 
@@ -200,8 +202,7 @@ def print_all_comments(username):
         print "%s commented %s" % (info[i]["from"]["username"], info[i]['text'])
 
 
-
-
+#deleting all the comments containing particular word by help of the list of comment_id returned by the get_comment_id() function
 def delete_comment(username):
 
     media_id = get_media_id(username)
@@ -209,6 +210,8 @@ def delete_comment(username):
     comment_id = get_comment_id(username)
 
     if len(comment_id)>0:
+
+#deleting all the comments containing particular word by help of the list of comment_id returned by the get_comment_id() function
 
         for itr in comment_id:
 
