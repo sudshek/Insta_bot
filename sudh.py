@@ -1,5 +1,11 @@
 from Tix import _dummyComboBox
 
+name = raw_input("Enter User Name:")
+
+
+
+
+
 import requests
 
 BASE_URL = "https://api.instagram.com/v1"
@@ -24,51 +30,62 @@ def my_info():
 
 #to print users id
 
-def get_user_id(user_name):
+def get_user_id(name):
 
-    URL = BASE_URL + "/users/search?q=%s&access_token=%s" %(user_name,APP_ACCESS_TOKEN)
+    URL = BASE_URL + "/users/search?q=%s&access_token=%s" %(name,APP_ACCESS_TOKEN)
 
     response = requests.get(URL)
+    info = response.json()['data']
+    if len(info)>0:
 
-    user_id = response.json()['data'][0]['id']
-
-
-
-    return user_id
+        user_id = response.json()['data'][0]['id']
 
 
+
+        return user_id
+    # If no user with required name is found, The code should end at that point.
+
+    else:
+        print "No User Found!!!"
+        exit()
 #to print posts of users
 
-def get_user_media(User_name):
+def get_user_media(name):
 
-    user_id = get_user_id(User_name)
+
+    user_id = get_user_id(name)
 
     URL = BASE_URL +"/users/%s/media/recent?access_token=%s" %(user_id,APP_ACCESS_TOKEN)
 
     response = requests.get(URL)
 
+
     info = response.json()["data"]
 
-    if info:
 
+    if info:
         for i in range(len(info)):
 
-            print "Post ID: %s" %(info[i]["id"])
+            print "S. No.   :     %d" % (i+1)
+            print "User ID:       %s" %(info[i]['caption']['from']['id'])
+            print "User Name     :%s"   %(info[i]['caption']['from']['username'])
+            print "Post ID:       %s" % (info[i]['id'])
 
-            print "post Link: %s" %(info[i]["link"])
-
-            print "Comment Count : %s" %(info[i]["comments"]["count"])
-
-            print "Like Count : %s" %(info[i]["likes"]['count'])
+            print "post Link:     %s" % (info[i]["link"])
+            print "Comment Count: %s" % (info[i]["comments"]["count"])
+            print "Like Count :   %s" % (info[i]["likes"]['count'])
 
             if info[i]["caption"]['text']:
-                print "Caption:%s" %(info[i]["caption"]['text'])
+                print "Caption:    %s" % (info[i]["caption"]['text'])
 
             else:
                 print "Sorry!!! No caption"
-
+            print
+            print
+            print
     else:
         print "Sorry!! The User has no Posts"
+    action(name)
 
 
 
@@ -76,20 +93,33 @@ def get_user_media(User_name):
 
 
 
-#this function fetches User Id
+#this function fetches Media Id
 
 
-def get_media_id(User_name):
+def get_media_id(name):
 
-    user_id = get_user_id(User_name)
+    serial_number = int(raw_input("Enter the serial number of the post!!"))
+
+    user_id = get_user_id(name)
 
     URL = BASE_URL + "/users/%s/media/recent?access_token=%s" % (user_id, APP_ACCESS_TOKEN)
+    media_id = []
+    response = requests.get(URL).json()
+    info = response['data']
+    for i in range(len(info)):
+        media_id.append(info[i]['id'])
 
-    response = requests.get(URL)
 
-    info = response.json()["data"]
+    return media_id[serial_number-1]
 
-    return info[1]["id"]
+
+
+
+
+   
+
+
+
 
 
 
@@ -100,19 +130,20 @@ def get_media_id(User_name):
 
 # LIKES THE POST OF THE ENTERED USER NAME AND POST ORDER
 
-def like_a_post(user_name):
+def like_a_post(name):
 
-    i = raw_input("Enter the serial number of post u want to like")
 
-    media_id = get_media_id(user_name)
+
+    media_id = get_media_id(name)
 
     URL = BASE_URL + "/media/%s/likes" %(media_id)
 
     payload = {"access_token": APP_ACCESS_TOKEN}
 
+
     response = requests.post(URL,payload).json()
 
-    print response
+
 
     if response['meta']['code'] == 200:
         print "Congratulations! The post has been successfully liked"
@@ -120,16 +151,14 @@ def like_a_post(user_name):
     else :
         print "OOPS!! Have a look at your code"
 
-
-
-
+    action(name)
 
 
 # this function comments on the post
 
-def comment_on_a_post(username):
+def comment_on_a_post(name):
 
-    media_id = get_media_id(username)
+    media_id = get_media_id(name)
 
     text = raw_input("Enter the comment")
 
@@ -149,13 +178,13 @@ def comment_on_a_post(username):
         print 'Could not comment!!!, Recheck your comment'
         print response['meta']["error_message"]
 
-
+    action(name)
 
  #this function returns the comment id of the comment with the word we are searching for
 
-def get_comment_id(username):
+def get_comment_id(name):
 
-    media_id = get_media_id(username)
+    media_id = get_media_id(name)
 
     URL = BASE_URL + "/media/%s/comments?access_token=%s" %(media_id,APP_ACCESS_TOKEN)
 
@@ -167,9 +196,10 @@ def get_comment_id(username):
 
     comment_id = []
 
-    print response.json()
+
 
 # Storing all the commenrt_id of comments containing word entered by user in a list "comment_id)
+
     for i in range(len(info)):
 
         split = info[i]['text'].split()
@@ -177,15 +207,20 @@ def get_comment_id(username):
         if word in split:
             comment_id.append(info[i]['id'])
 
+# Storing media_id as last element of 'comment_id' so that we dont have to call media_id again while deleting the comment
+    comment_id.append(media_id)
+    if len(comment_id)>0:
+        return comment_id
+    else:
+        print "No Comment Found!!!"
 
-    return comment_id
-
+    action(name)
 
  #This function prints the name of the one who commented along with the comments.
 
-def print_all_comments(username):
+def print_all_comments(name):
 
-    media_id = get_media_id(username)
+    media_id = get_media_id(name)
 
     URL = BASE_URL + "/media/%s/comments?access_token=%s" % (media_id, APP_ACCESS_TOKEN)
 
@@ -201,42 +236,153 @@ def print_all_comments(username):
     for i in range(len(info)):
         print "%s commented %s" % (info[i]["from"]["username"], info[i]['text'])
 
+    action(name)
 
 #deleting all the comments containing particular word by help of the list of comment_id returned by the get_comment_id() function
-def delete_comment(username):
+def delete_comment(name):
 
-    media_id = get_media_id(username)
 
-    comment_id = get_comment_id(username)
-    print media_id
-    print comment_id
+
+    comment_id = get_comment_id(name)
+#in get_comment_id, media_id was stored as last element
+    media_id = comment_id[len(comment_id)-1]
+
+
 
     if len(comment_id)>0:
 
 #deleting all the comments containing particular word by help of the list of comment_id returned by the get_comment_id() function
 
-        for itr in comment_id:
+        for i in range(len(comment_id)-1):    #the last entry is media_id, While previous ones are comment_id.., so we are accessing the elements before the last elements..
 
-            URL = BASE_URL + "/media/%s/comments/%s?access_token=%s" %(media_id,itr,APP_ACCESS_TOKEN)
+
+            URL = BASE_URL + "/media/%s/comments/%s?access_token=%s" %(media_id,comment_id[i],APP_ACCESS_TOKEN)
             print URL
             response = requests.delete(URL)
-            print itr
-            print response
+            if response.status_code == 200:
+                print  "Successfully Deleted!!!"
+            else :
+                print "Could Not Delete!! Sorry!!"
+    else :
+        print "No Such Comment Found!!!!"
+
+    action(name)
+
+def average_number_of_words_in_comment(name):
+    media_id = get_media_id(name)
+
+    URL = BASE_URL + "/media/%s/comments?access_token=%s" % (media_id, APP_ACCESS_TOKEN)
+
+
+    response = requests.get(URL)
+
+    sum = 0
+    info = response.json()["data"]
+    number_of_entries = len(info)
+
+    for i in range(number_of_entries):
+        split = info[i]['text'].split()
+        number_of_words = len(split)
+        sum += number_of_words
+    if sum>0:
+        average = float(sum/number_of_entries)
+        print average
+    else :
+        avg = 0
+        print avg
 
 
 
+#Gets comment_id of all the comments present in the entered given media....
+def get_all_comments(name):
+    media_id = get_media_id(name)
 
-delete_comment('piyush')
-
-
-
-
-delete_comment('piyush')
+    URL = BASE_URL + "/media/%s/comments?access_token=%s" % (media_id, APP_ACCESS_TOKEN)
 
 
 
+    response = requests.get(URL)
+
+    info = response.json()["data"]
+
+    comment_id = []
+
+
+    for i in range(len(info)):
+        comment_id.append(info[i]['id'])
+
+
+    comment_id.append(media_id)
+    return  comment_id
+
+ #An extra function, Not in objectives to delete alll the comments at once
+def delete_all_comments(name):
+    comment_id = get_all_comments(name)
+    # in get_comment_id, media_id was stored as last element
+    media_id = comment_id[len(comment_id) - 1]
+
+    if len(comment_id) > 0:
 
 
 
+        for i in range(len(comment_id) - 1):  # the last entry is media_id, While previous ones are comment_id.., so we are accessing the elements before the last elements..
 
 
+            URL = BASE_URL + "/media/%s/comments/%s?access_token=%s" % (media_id, comment_id[i], APP_ACCESS_TOKEN)
+            print URL
+            response = requests.delete(URL)
+            if response.status_code == 200:
+                print  "Successfully Deleted!!!"
+            else:
+                print "Could Not Delete!! Sorry!!"
+    else:
+        print "No Such Comment Found!!!!"
+
+    action(name)
+
+#Asks user to choose actions from the set of available actions...
+def action(name):
+
+
+    print "Like                   :1"
+    print "Comment                :2"
+    print "Delete Comment         :3"
+    print "Print all comments     :4"
+    print "My Information         :5"
+    print "Average N0 of words in comment :6"
+    print "Delete All coomments   :7"
+    print "Exit                   :0"
+    actions = int(raw_input("Choose Action : "))
+
+    if actions == 1:
+       print like_a_post(name)
+
+    elif actions == 2:
+        comment_on_a_post(name)
+
+
+    elif actions == 3:
+        delete_comment(name)
+
+    elif actions == 4 :
+        print_all_comments(name)
+
+    elif actions == 5:
+       print my_info()
+
+    elif actions==6:
+        average_number_of_words_in_comment(name)
+
+    elif actions == 7:
+        delete_all_comments(name)
+
+    elif actions == 0:
+        exit()
+
+    else :
+        print "Invalid Entry!!"
+
+
+
+get_user_media(name)
+action(name)
